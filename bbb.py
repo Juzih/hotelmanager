@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pymysql as mdb
+import MySQLdb as mdb
 import datetime
 def connect_mysql():
     db_config = dict(host='localhost', port=3306, db='BOAO', charset='utf8', user='BOAO', passwd='19981228')
@@ -33,7 +33,7 @@ def sql(list):
         cus.close()
         cnx.close()
         checkin(b,list)
-        return int(b)
+        return 1
     if list[0]=='2':
         return checkout(list)
     if list[0]=='3':
@@ -49,7 +49,7 @@ def sql(list):
     if list[0]=='7':
         return rate()
     if list[0]=='8':
-        return money_people(list)
+        return money_people()
 def full():
     cnx = connect_mysql()
     cus = cnx.cursor()
@@ -93,8 +93,8 @@ def continued(list):
     room = "SELECT * FROM room2 WHERE room_id ='%s'"%(list[1])
     cus.execute(room)
     d=cus.fetchone()
-    c=(date_caculate(list[2],d[5])*150)+d[10]
-    b=(date_caculate(list[2],d[5])*150)+d[11]
+    c=(date_caculate(d[5],list[2])*150)+d[10]
+    b=(date_caculate(d[5],list[2])*150)+d[11]
     room = "UPDATE  room2 SET out_time ='%s',money='%d',money_day='%d'" % (list[2],c,b) + "where room_id = '%s'" % (list[1])
     cus.execute(room)
     cnx.commit()
@@ -123,9 +123,8 @@ def day_pass():
     cus = cnx.cursor()
     sqlo = "select * from people2 where week = '%d'" % (8)
     cus.execute(sqlo)
-    mn=cus.fetchone()
-    m=str(mn[1])
-    n=mn[2]
+    m= str(cus.fetchone()[0])
+    n=cus.fetchone()[1]
     if n>=8:
         n=1
         for i in range(1,8):
@@ -133,7 +132,7 @@ def day_pass():
             cus.execute(sqln)
             cnx.commit()
     m=date_caculate(m,1)
-    sql1="select sum(money_day) from room2 where money_day<>'%d'"%(0)
+    sql1="select sum(money) from room2 where money_day<>'%d'"%(0)
     cus.execute(sql1)
     p=cus.fetchone()[0]
     if p is not None:
@@ -179,18 +178,18 @@ def money():
 def rate():
     cnx = connect_mysql()
     cus = cnx.cursor()
-    sql="select * from people2 where week='%d'"%(8)
+    sql="select * from people2 "
     cus.execute(sql)
-    results = cus.fetchone()[2]
-    sql = "select * from people2 where week='%d'" % (results-1)
-    cus.execute(sql)
-    d=cus.fetchone()[2]
+    results = cus.fetchall()
+    d = []
+    for row in results:
+        d.append(int(row[2]))
     return d
 def money_people(list):
     cnx = connect_mysql()
     cus = cnx.cursor()
-    sql = "select * from room2 where room_id='%s'"%(str(list[1]))
+    sql = "select * from room2 where room_id='%s'"%(list[1])
     cus.execute(sql)
-    results = cus.fetchone()
+    results = cus.fetone()
     d=results[10]
     return d
